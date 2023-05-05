@@ -141,12 +141,18 @@ class NPC(AnimatedSprite):
         return int(self.x), int(self.y)
 
     def ray_cast_player_npc(self):
+        """
+        Determine whether the ray intersects with the player or NPC.
+
+        Returns:
+            bool: True if the ray intersects with the player or NPC, False otherwise.
+        """
         if self.game.player.map_pos == self.map_pos:
             return True
 
         self.player_dist_v, self.player_dist_h = 0, 0
 
-        ox, oy = self.game.player.pos
+        player_pos_x, player_pos_y = self.game.player.pos
         x_map, y_map = self.game.player.map_pos
 
         ray_angle = self.theta
@@ -155,16 +161,16 @@ class NPC(AnimatedSprite):
         cos_a = math.cos(ray_angle)
 
         wall_dist_h = self.get_horizontals(
-            ox=ox,
-            oy=oy,
+            player_pos_x=player_pos_x,
+            player_pos_y=player_pos_y,
             y_map=y_map,
             sin_a=sin_a,
             cos_a=cos_a
         )
 
         wall_dist_v = self.get_verticals(
-            ox=ox,
-            oy=oy,
+            player_pos_x=player_pos_x,
+            player_pos_y=player_pos_y,
             x_map=x_map,
             sin_a=sin_a,
             cos_a=cos_a
@@ -177,11 +183,25 @@ class NPC(AnimatedSprite):
             return True
         return False
 
-    def get_horizontals(self, y_map, sin_a, cos_a, ox, oy):
+    def get_horizontals(self, y_map, sin_a, cos_a, player_pos_x, player_pos_y):
+        """
+        Calculate the distance to the first horizontal wall intersection in a given map row.
+
+        Args:
+            y_map (int): The y-coordinate of the map row being checked.
+            sin_a (float): The sine of the player's viewing angle.
+            cos_a (float): The cosine of the player's viewing angle.
+            player_pos_x (float): The x-coordinate of the player's position.
+            player_pos_y (float): The y-coordinate of the player's position.
+
+        Returns:
+            float: The distance to the first horizontal wall intersection in the given map row,
+            or 0 if no intersection was found.
+        """
         y_hor, dy = (y_map + 1, 1) if sin_a > 0 else (y_map - 1e-6, -1)
 
-        depth_hor = (y_hor - oy) / sin_a
-        x_hor = ox + depth_hor * cos_a
+        depth_hor = (y_hor - player_pos_y) / sin_a
+        x_hor = player_pos_x + depth_hor * cos_a
 
         delta_depth = dy / sin_a
         dx = delta_depth * cos_a
@@ -199,12 +219,25 @@ class NPC(AnimatedSprite):
 
         return 0
 
+    def get_verticals(self, x_map, sin_a, cos_a, player_pos_x, player_pos_y):
+        """
+        Calculate the distance to the first vertical wall intersection in a given map column.
 
-    def get_verticals(self, x_map, sin_a, cos_a, ox, oy):
+        Args:
+            x_map (int): The x-coordinate of the map column being checked.
+            sin_a (float): The sine of the player's viewing angle.
+            cos_a (float): The cosine of the player's viewing angle.
+            player_pos_x (float): The x-coordinate of the player's position.
+            player_pos_y (float): The y-coordinate of the player's position.
+
+        Returns:
+            float: The distance to the first vertical wall intersection in the given map column,
+            or 0 if no intersection was found.
+        """
         x_vert, dx = (x_map + 1, 1) if cos_a > 0 else (x_map - 1e-6, -1)
 
-        depth_vert = (x_vert - ox) / cos_a
-        y_vert = oy + depth_vert * sin_a
+        depth_vert = (x_vert - player_pos_x) / cos_a
+        y_vert = player_pos_y + depth_vert * sin_a
 
         delta_depth = dx / cos_a
         dy = delta_depth * sin_a
