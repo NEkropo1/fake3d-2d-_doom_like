@@ -16,7 +16,11 @@ class Player:
         self.health_battery = PLAYER_MAX_HEALTH // 2
 
     def recover_health(self):
-        if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH and self.health_battery:
+        if (
+            self.check_health_recovery_delay()
+            and self.health < PLAYER_MAX_HEALTH
+            and self.health_battery
+        ):
             self.health += 1
             self.health_battery -= 1
 
@@ -44,7 +48,11 @@ class Player:
 
         if event.type == pg.MOUSEBUTTONDOWN or (keys[pg.K_f] and keys[pg.K_LSHIFT]):
             try:
-                if event.button == 1 and not self.shot and not self.game.weapon.reloading:
+                if (
+                    event.button == 1
+                    and not self.shot
+                    and not self.game.weapon.reloading
+                ):
                     self.game.sound.shotgun.play()
                     self.shot = True
                     self.game.weapon.reloading = True
@@ -95,10 +103,17 @@ class Player:
             self.y += dy
 
     def draw(self):
-        pg.draw.line(self.game.screen, 'yellow', (self.x * 100, self.y * 100),
-                    (self.x * 100 + WIDTH * math.cos(self.angle),
-                     self.y * 100 + WIDTH * math. sin(self.angle)), 2)
-        pg.draw.circle(self.game.screen, 'green', (self.x * 100, self.y * 100), 15)
+        pg.draw.line(
+            self.game.screen,
+            "yellow",
+            (self.x * 100, self.y * 100),
+            (
+                self.x * 100 + WIDTH * math.cos(self.angle),
+                self.y * 100 + WIDTH * math.sin(self.angle),
+            ),
+            2,
+        )
+        pg.draw.circle(self.game.screen, "green", (self.x * 100, self.y * 100), 15)
 
     def mouse_control(self):
         mx, my = pg.mouse.get_pos()
