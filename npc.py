@@ -30,6 +30,8 @@ class NPC(AnimatedSprite):
         self.ray_cast_value = False
         self.frame_counter = 0
         self.player_search_trigger = False
+        self.player_dist_v = 0
+        self.player_dist_h = 0
 
     def update(self):
         self.check_animation_time()
@@ -142,8 +144,7 @@ class NPC(AnimatedSprite):
         if self.game.player.map_pos == self.map_pos:
             return True
 
-        wall_dist_v, wall_dist_h = 0, 0
-        player_dist_v, player_dist_h = 0, 0
+        self.player_dist_v, self.player_dist_h = 0, 0
 
         ox, oy = self.game.player.pos
         x_map, y_map = self.game.player.map_pos
@@ -153,7 +154,30 @@ class NPC(AnimatedSprite):
         sin_a = math.sin(ray_angle)
         cos_a = math.cos(ray_angle)
 
-        # horizontals
+        wall_dist_h = self.get_horizontals(
+            ox=ox,
+            oy=oy,
+            y_map=y_map,
+            sin_a=sin_a,
+            cos_a=cos_a
+        )
+
+        wall_dist_v = self.get_verticals(
+            ox=ox,
+            oy=oy,
+            x_map=x_map,
+            sin_a=sin_a,
+            cos_a=cos_a
+        )
+
+        player_dist = max(self.player_dist_v, self.player_dist_h)
+        wall_dist = max(wall_dist_v, wall_dist_h)
+
+        if 0 < player_dist < wall_dist or not wall_dist:
+            return True
+        return False
+
+    def get_horizontals(self, y_map, sin_a, cos_a, ox, oy):
         y_hor, dy = (y_map + 1, 1) if sin_a > 0 else (y_map - 1e-6, -1)
 
         depth_hor = (y_hor - oy) / sin_a
@@ -165,16 +189,18 @@ class NPC(AnimatedSprite):
         for i in range(MAX_DEPTH):
             tile_hor = int(x_hor), int(y_hor)
             if tile_hor == self.map_pos:
-                player_dist_h = depth_hor
+                self.player_dist_h = depth_hor
                 break
             if tile_hor in self.game.map.world_map:
-                wall_dist_h = depth_hor
-                break
+                return depth_hor
             x_hor += dx
             y_hor += dy
             depth_hor += delta_depth
 
-        # verticals
+        return 0
+
+
+    def get_verticals(self, x_map, sin_a, cos_a, ox, oy):
         x_vert, dx = (x_map + 1, 1) if cos_a > 0 else (x_map - 1e-6, -1)
 
         depth_vert = (x_vert - ox) / cos_a
@@ -186,21 +212,15 @@ class NPC(AnimatedSprite):
         for i in range(MAX_DEPTH):
             tile_vert = int(x_vert), int(y_vert)
             if tile_vert == self.map_pos:
-                player_dist_v = depth_vert
+                self.player_dist_v = depth_vert
                 break
             if tile_vert in self.game.map.world_map:
-                wall_dist_v = depth_vert
-                break
+                return depth_vert
             x_vert += dx
             y_vert += dy
             depth_vert += delta_depth
 
-        player_dist = max(player_dist_v, player_dist_h)
-        wall_dist = max(wall_dist_v, wall_dist_h)
-
-        if 0 < player_dist < wall_dist or not wall_dist:
-            return True
-        return False
+        return 0
 
     def draw_ray_cast(self):
         pg.draw.circle(self.game.screen, "red", (100 * self.x, 100 * self.y), 15)
